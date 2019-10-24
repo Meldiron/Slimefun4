@@ -226,11 +226,40 @@ public class ChestSlimefunGuide implements ISlimefunGuide {
 			if (target >= category.getItems().size()) break;
 			final SlimefunItem sfitem = category.getItems().get(target);
 
-			if (Slimefun.isEnabled(p, sfitem, false)) {
+			// if (Slimefun.isEnabled(p, sfitem, false)) {
 				final Research research = sfitem.getResearch();
 				if (survival && research != null && !profile.hasUnlocked(research)) {
 					if (Slimefun.hasPermission(p, sfitem, false)) {
-						menu.addItem(index, new CustomItem(Material.BARRIER, "&r" + ItemUtils.getItemName(sfitem.getItem()), "&4&lLOCKED", "", "&a> Click to unlock", "", "&7Cost: &b" + research.getCost() + " Level"));
+//						menu.addItem(index, new CustomItem(Material.BARRIER, "&r" + ItemUtils.getItemName(sfitem.getItem()), "&4&lLOCKED", "", "&a> Click to unlock", "", "&7Cost: &b" + research.getCost() + " Level"));
+
+						ArrayList<String> lore = new ArrayList<String>(){{
+							add("&4&lLOCKED");
+							add("");
+							add("&a> Click to unlock");
+							add("");
+							add("&7Cost: &b" + research.getCost() + " Level");
+							add("");
+							add("");
+							add("&7Description: ");
+
+							if(sfitem != null && sfitem.getItem() != null && sfitem.getItem().getItemMeta() != null && sfitem.getItem().getItemMeta().getLore() != null) {
+								Integer i = 0;
+								for(String s : sfitem.getItem().getItemMeta().getLore()) {
+									if(i >= 1) {
+										add(s);
+									}
+
+									i++;
+								}
+							}
+						}};
+
+						String[] arr = new String[lore.size()];
+						arr = lore.toArray(arr);
+
+						menu.addItem(index, new CustomItem(Material.BARRIER, "&r" + StringUtils.formatItemName(sfitem.getItem(), false), arr));
+
+
 						menu.addMenuClickHandler(index, (pl, slot, item, action) -> {
 							if (!Research.isResearching(pl)) {
 								if (research.canUnlock(pl)) {
@@ -285,7 +314,7 @@ public class ChestSlimefunGuide implements ISlimefunGuide {
 					});
 					index++;
 				}
-			}
+			// }
 		}
 
 		menu.open(p);

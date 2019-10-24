@@ -430,8 +430,8 @@ public class ItemListener implements Listener {
 					SlimefunManager.isItemSimiliar(slot1, SlimefunGuide.getItem(SlimefunGuideLayout.BOOK), true) ||
 					SlimefunManager.isItemSimiliar(slot1, SlimefunGuide.getItem(SlimefunGuideLayout.CHEST), true)) {
 
-						e.setCancelled(true);
-						SlimefunPlugin.getLocal().sendMessage((Player) e.getWhoClicked(), "anvil.not-working", true);
+						// e.setCancelled(true);
+						// SlimefunPlugin.getLocal().sendMessage((Player) e.getWhoClicked(), "anvil.not-working", true);
 			}
 		}
 	}

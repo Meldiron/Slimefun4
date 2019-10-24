@@ -99,6 +99,7 @@ public final class SlimefunPlugin extends JavaPlugin {
 	public void onEnable() {
 		if (new CSCoreLibLoader(this).load()) {
 
+			/*
 			String currentVersion = ReflectionUtils.getVersion();
 
 			if (currentVersion.startsWith("v")) {
@@ -135,6 +136,7 @@ public final class SlimefunPlugin extends JavaPlugin {
 					return;
 				}
 			}
+			*/
 
 			instance = this;
 			getLogger().log(Level.INFO, "Loading Files...");
@@ -160,11 +162,12 @@ public final class SlimefunPlugin extends JavaPlugin {
 			// Setting up other stuff
 			utilities = new Utilities();
 			gps = new GPSNetwork();
-			
+
 			// Setting up bStats
-			new SlimefunMetrics(this);
+			// new SlimefunMetrics(this);
 
 			// Setting up the Auto-Updater
+            /*
 			Updater updater;
 
 			if (getDescription().getVersion().startsWith("DEV - ")) {
@@ -181,6 +184,7 @@ public final class SlimefunPlugin extends JavaPlugin {
 			}
 
 			if (config.getBoolean("options.auto-update")) updater.start();
+			*/
 
 			// Creating all necessary Folders
 			String[] storage = {"blocks", "stored-blocks", "stored-inventories", "stored-chunks", "universal-inventories", "waypoints", "block-backups"};
