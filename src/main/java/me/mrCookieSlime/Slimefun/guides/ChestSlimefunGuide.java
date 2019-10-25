@@ -101,7 +101,7 @@ public class ChestSlimefunGuide implements ISlimefunGuide {
 					}
 				}
 
-				if (!locked) {
+				// if (!locked) {
 					if (!(category instanceof LockedCategory)) {
 						if (!(category instanceof SeasonalCategory)) {
 							menu.addItem(index, category.getItem());
@@ -145,7 +145,7 @@ public class ChestSlimefunGuide implements ISlimefunGuide {
 						menu.addMenuClickHandler(index, (pl, slot, item, action) -> false);
 						index++;
 					}
-				}
+				// }
 			}
 		}
 
