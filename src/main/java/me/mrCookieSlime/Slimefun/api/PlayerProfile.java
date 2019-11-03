@@ -135,6 +135,10 @@ public final class PlayerProfile {
 	 * @return			Whether this Research has been unlocked
 	 */
 	public boolean hasUnlocked(Research research) {
+		if(research == null) {
+			return true;
+		}
+
 		return !research.isEnabled() || researches.contains(research);
 	}
 	

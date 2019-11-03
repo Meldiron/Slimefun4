@@ -65,7 +65,10 @@ public class ArmorTask implements Runnable {
 						Bukkit.getScheduler().runTask(SlimefunPlugin.instance, () -> {
 							for (PotionEffect effect: armorpiece.getItem().get().getEffects()) {
 								p.removePotionEffect(effect.getType());
-								p.addPotionEffect(effect);
+
+								if(!p.getWorld().getName().equalsIgnoreCase("spawn")) {
+									p.addPotionEffect(effect);
+								}
 							}
 						});
 					}

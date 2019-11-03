@@ -1033,7 +1033,7 @@ public final class SlimefunSetup {
 			@Override
 			public boolean onInteract(final Player p, MultiBlock mb, final Block b) {
 				if (mb.isMultiBlock(SlimefunItem.getByID("DIGITAL_MINER"))) {
-					p.sendMessage(ChatColor.DARK_RED + "THIS MACHINE WILL SOON BE REMOVED!");
+					// p.sendMessage(ChatColor.DARK_RED + "THIS MACHINE WILL SOON BE REMOVED!");
 					if (CSCoreLib.getLib().getProtectionManager().canAccessChest(p.getUniqueId(), b, true) && Slimefun.hasUnlocked(p, SlimefunItems.DIGITAL_MINER, true)) {
 						Block chestBlock = b.getRelative(BlockFace.UP);
 
@@ -1091,7 +1091,7 @@ public final class SlimefunSetup {
 			@Override
 			public boolean onInteract(final Player p, MultiBlock mb, final Block b) {
 				if (mb.isMultiBlock(SlimefunItem.getByID("ADVANCED_DIGITAL_MINER"))) {
-					p.sendMessage(ChatColor.DARK_RED + "THIS MACHINE WILL SOON BE REMOVED!");
+					// p.sendMessage(ChatColor.DARK_RED + "THIS MACHINE WILL SOON BE REMOVED!");
 					if (CSCoreLib.getLib().getProtectionManager().canAccessChest(p.getUniqueId(), b, true) && Slimefun.hasUnlocked(p, SlimefunItems.ADVANCED_DIGITAL_MINER, true)) {
 						Block chestBlock = b.getRelative(BlockFace.UP);
 

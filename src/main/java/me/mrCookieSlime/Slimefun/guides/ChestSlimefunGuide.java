@@ -425,6 +425,14 @@ public class ChestSlimefunGuide implements ISlimefunGuide {
 			recipeType = RecipeType.FURNACE;
 			result = r.getResult();
 		}
+
+		if(recipeType == null) {
+			return;
+		}
+
+		if(result == null) {
+			return;
+		}
 		
 		ChestMenu menu = create();
 		displayItem(menu, profile, p, item, result, recipeType, recipe, addToHistory);
@@ -632,7 +640,7 @@ public class ChestSlimefunGuide implements ISlimefunGuide {
 			if (slimefunItem == null) return item;
 
 			String lore = Slimefun.hasPermission(p, slimefunItem, false) ? "&rNeeds to be unlocked elsewhere" : "&rNo Permission";
-			return Slimefun.hasUnlocked(p, slimefunItem, false) ? item: new CustomItem(Material.BARRIER, ItemUtils.getItemName(item), "&4&lLOCKED", "", lore);
+			return PlayerProfile.get(p).hasUnlocked(slimefunItem.getResearch()) ? item : new CustomItem(Material.BARRIER, ItemUtils.getItemName(item), "&4&lLOCKED", "", lore);
 		}
 		else {
 			return item;
