@@ -1,7 +1,5 @@
 package me.mrCookieSlime.Slimefun.Objects.SlimefunItem.machines.electric;
 
-import java.util.logging.Level;
-
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.block.Block;
@@ -21,7 +19,7 @@ import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.interfaces.InventoryBlock;
 import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
 import me.mrCookieSlime.Slimefun.Setup.SlimefunManager;
 import me.mrCookieSlime.Slimefun.api.BlockStorage;
-import me.mrCookieSlime.Slimefun.api.Slimefun;
+import me.mrCookieSlime.Slimefun.api.SlimefunItemStack;
 import me.mrCookieSlime.Slimefun.api.energy.ChargableBlock;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenuPreset;
@@ -32,11 +30,11 @@ public class AnimalGrowthAccelerator extends SlimefunItem implements InventoryBl
 
 	protected int energyConsumption = 14;
 	
-	public AnimalGrowthAccelerator(Category category, ItemStack item, String name, RecipeType recipeType, ItemStack[] recipe) {
-		super(category, item, name, recipeType, recipe);
+	public AnimalGrowthAccelerator(Category category, SlimefunItemStack item, RecipeType recipeType, ItemStack[] recipe) {
+		super(category, item, recipeType, recipe);
 		createPreset(this, "&bGrowth Accelerator", this::constructMenu);
 		
-		registerBlockHandler(name, (p, b, tool, reason) -> {
+		registerBlockHandler(getID(), (p, b, tool, reason) -> {
 			BlockMenu inv = BlockStorage.getInventory(b);
 			if (inv != null) {
 				for (int slot : getInputSlots()) {
@@ -72,11 +70,7 @@ public class AnimalGrowthAccelerator extends SlimefunItem implements InventoryBl
 			
 			@Override
 			public void tick(Block b, SlimefunItem sf, Config data) {
-				try {
-					AnimalGrowthAccelerator.this.tick(b);
-				} catch (Exception x) {
-					Slimefun.getLogger().log(Level.SEVERE, "An Error occured while ticking an Animal Growth Accelerator for Slimefun " + Slimefun.getVersion(), x);
-				}
+				AnimalGrowthAccelerator.this.tick(b);
 			}
 
 			@Override
@@ -88,8 +82,8 @@ public class AnimalGrowthAccelerator extends SlimefunItem implements InventoryBl
 	
 	protected void tick(Block b) {
 		for (Entity n : b.getWorld().getNearbyEntities(b.getLocation(), 3.0, 3.0, 3.0, n -> n instanceof Ageable && n.isValid() && !((Ageable) n).isAdult())) {
-			for (int slot: getInputSlots()) {
-				if (SlimefunManager.isItemSimiliar(BlockStorage.getInventory(b).getItemInSlot(slot), SlimefunItems.ORGANIC_FOOD, false)) {
+			for (int slot : getInputSlots()) {
+				if (SlimefunManager.isItemSimilar(BlockStorage.getInventory(b).getItemInSlot(slot), SlimefunItems.ORGANIC_FOOD, false)) {
 					if (ChargableBlock.getCharge(b) < energyConsumption) return;
 					
 					ChargableBlock.addCharge(b, -energyConsumption);

@@ -1,6 +1,7 @@
 package me.mrCookieSlime.Slimefun.Objects.SlimefunItem.items;
 
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.bukkit.Material;
 import org.bukkit.entity.Creeper;
@@ -16,13 +17,10 @@ import me.mrCookieSlime.Slimefun.Lists.RecipeType;
 import me.mrCookieSlime.Slimefun.Objects.Category;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.SimpleSlimefunItem;
 import me.mrCookieSlime.Slimefun.Objects.handlers.EntityKillHandler;
-import me.mrCookieSlime.Slimefun.Setup.SlimefunManager;
 import me.mrCookieSlime.Slimefun.api.Slimefun;
 import me.mrCookieSlime.Slimefun.api.SlimefunItemStack;
 
 public class SwordOfBeheading extends SimpleSlimefunItem<EntityKillHandler> {
-
-	private final Random random = new Random();
 	
 	private int chanceZombie;
 	private int chanceSkeleton;
@@ -42,7 +40,9 @@ public class SwordOfBeheading extends SimpleSlimefunItem<EntityKillHandler> {
 	@Override
 	public EntityKillHandler getItemHandler() {
 		return (e, entity, killer, item) -> {
-			if (SlimefunManager.isItemSimiliar(item, getItem(), true)) {
+			if (isItem(item)) {
+				Random random = ThreadLocalRandom.current();
+				
 				if (e.getEntity() instanceof Zombie) {
                     if (random.nextInt(100) < chanceZombie) {
                         e.getDrops().add(new ItemStack(Material.ZOMBIE_HEAD));
@@ -69,6 +69,7 @@ public class SwordOfBeheading extends SimpleSlimefunItem<EntityKillHandler> {
 
                     e.getDrops().add(skull);
                 }
+				
 				return true;
 			}
 			else return false;

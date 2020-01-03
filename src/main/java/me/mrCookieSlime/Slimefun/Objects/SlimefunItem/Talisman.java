@@ -2,7 +2,7 @@ package me.mrCookieSlime.Slimefun.Objects.SlimefunItem;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -16,7 +16,7 @@ import org.bukkit.event.player.PlayerEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 
-import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.Item.CustomItem;
+import io.github.thebusybiscuit.cscorelib2.item.CustomItem;
 import me.mrCookieSlime.Slimefun.SlimefunPlugin;
 import me.mrCookieSlime.Slimefun.Lists.Categories;
 import me.mrCookieSlime.Slimefun.Lists.RecipeType;
@@ -100,6 +100,7 @@ public class Talisman extends SlimefunItem {
     public void install() {
         EnderTalisman talisman = (EnderTalisman) SlimefunItem.getByItem(upgrade());
         Research research = Research.getByID(112);
+        
         if (talisman != null) {
             Slimefun.addOfficialWikiPage(talisman.getID(), "Talismans");
             if (research != null) talisman.bindToResearch(research);
@@ -112,13 +113,18 @@ public class Talisman extends SlimefunItem {
         return !("").equalsIgnoreCase(talisman.getSuffix());
     }
     
+    public static boolean checkFor(Event e, SlimefunItemStack stack) {
+    	SlimefunItem item = SlimefunItem.getByItem(stack);
+    	return checkFor(e, item);
+    }
+    
     public static boolean checkFor(Event e, SlimefunItem item) {
-        if (!(item instanceof Talisman)) {
+    	if (!(item instanceof Talisman)) {
             return false;
         }
 
         Talisman talisman = (Talisman) item;
-        if (new Random().nextInt(100) < talisman.getChance()) {
+        if (ThreadLocalRandom.current().nextInt(100) > talisman.getChance()) {
             return false;
         }
 
@@ -144,11 +150,11 @@ public class Talisman extends SlimefunItem {
         else return false;
     }
 
-    private static void executeTalismanAttributes(Event e, Player p, Talisman talisman){
-        consumeItem(p,talisman);
-        applyTalismanEffects(p,talisman);
-        cancelEvent(e,talisman);
-        sendMessage(p,talisman);
+    private static void executeTalismanAttributes(Event e, Player p, Talisman talisman) {
+        consumeItem(p, talisman);
+        applyTalismanEffects(p, talisman);
+        cancelEvent(e, talisman);
+        sendMessage(p, talisman);
     }
 
     private static void applyTalismanEffects(Player p, Talisman talisman){
@@ -158,13 +164,15 @@ public class Talisman extends SlimefunItem {
     }
 
     private static void cancelEvent(Event e, Talisman talisman){
-        if (e instanceof Cancellable && talisman.isEventCancelled())
-            ((Cancellable) e).setCancelled(true);
+        if (e instanceof Cancellable && talisman.isEventCancelled()) {
+        	((Cancellable) e).setCancelled(true);
+        }
     }
 
     private static void sendMessage(Player p, Talisman talisman){
-        if (isTalismanMessage(talisman))
-            SlimefunPlugin.getLocal().sendMessage(p, "messages.talisman." + talisman.getSuffix(), true);
+        if (isTalismanMessage(talisman)) {
+        	SlimefunPlugin.getLocal().sendMessage(p, "messages.talisman." + talisman.getSuffix(), true);
+        }
     }
 
     private static void consumeItem(Player p, Talisman talisman){

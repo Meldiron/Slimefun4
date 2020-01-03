@@ -13,7 +13,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
-import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.Item.CustomItem;
+import io.github.thebusybiscuit.cscorelib2.item.CustomItem;
 import me.mrCookieSlime.Slimefun.SlimefunPlugin;
 import me.mrCookieSlime.Slimefun.Lists.Categories;
 import me.mrCookieSlime.Slimefun.Lists.RecipeType;
@@ -28,7 +28,10 @@ public class Compressor extends MultiBlockMachine {
 				SlimefunItems.COMPRESSOR, 
 				"COMPRESSOR",
 				new ItemStack[] {null, null, null, null, new ItemStack(Material.NETHER_BRICK_FENCE), null, new ItemStack(Material.PISTON), new CustomItem(Material.DISPENSER, "Dispenser (Facing up)"), new ItemStack(Material.PISTON)},
-				new ItemStack[] {new CustomItem(SlimefunItems.STONE_CHUNK, 4), new ItemStack(Material.COBBLESTONE)},
+				new ItemStack[] {
+					new CustomItem(SlimefunItems.STONE_CHUNK, 4), new ItemStack(Material.COBBLESTONE),
+					new ItemStack(Material.FLINT, 8), new ItemStack(Material.COBBLESTONE)
+				},
 				BlockFace.SELF
 		);
 	}
@@ -43,15 +46,18 @@ public class Compressor extends MultiBlockMachine {
 		Block dispBlock = b.getRelative(BlockFace.DOWN);
 		Dispenser disp = (Dispenser) dispBlock.getState();
 		Inventory inv = disp.getInventory();
-		for (ItemStack current: inv.getContents()) {
-			for (ItemStack convert: RecipeType.getRecipeInputs(this)) {
-				if (convert != null && SlimefunManager.isItemSimiliar(current, convert, true)) {
-					final ItemStack adding = RecipeType.getRecipeOutput(this, convert);
+		
+		for (ItemStack current : inv.getContents()) {
+			for (ItemStack convert : RecipeType.getRecipeInputs(this)) {
+				if (convert != null && SlimefunManager.isItemSimilar(current, convert, true)) {
+					ItemStack adding = RecipeType.getRecipeOutput(this, convert);
 					Inventory outputInv = findOutputInventory(adding, dispBlock, inv);
+					
 					if (outputInv != null) {
 						ItemStack removing = current.clone();
 						removing.setAmount(convert.getAmount());
 						inv.removeItem(removing);
+						
 						for (int i = 0; i < 4; i++) {
 							int j = i;
 							
@@ -63,7 +69,7 @@ public class Compressor extends MultiBlockMachine {
 									p.getWorld().playSound(p.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 1F, 1F);
 									outputInv.addItem(adding);
 								}
-							}, i*20L);
+							}, i * 20L);
 						}
 					}
 					else SlimefunPlugin.getLocal().sendMessage(p, "machines.full-inventory", true);
