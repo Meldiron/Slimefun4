@@ -54,6 +54,7 @@ public abstract class GEOMiner extends AContainer implements InventoryBlock, Rec
 				SimpleHologram.remove(b);
 				
 				BlockMenu inv = BlockStorage.getInventory(b);
+				
 				if (inv != null) {
 					for (int slot : getInputSlots()) {
 						if (inv.getItemInSlot(slot) != null) {
@@ -109,13 +110,13 @@ public abstract class GEOMiner extends AContainer implements InventoryBlock, Rec
 	@Override
 	public List<ItemStack> getDisplayRecipes() {
 		List<ItemStack> displayRecipes = new LinkedList<>();
-		for (OreGenResource resource: OreGenSystem.listResources()) {
+		
+		for (OreGenResource resource : OreGenSystem.listResources()) {
 			if (!resource.isLiquid()) {
 				displayRecipes.add(new CustomItem(resource.getItem(), "&r" + resource.getName()));
 			}
 		}
 		
-		if (displayRecipes.size() % 2 != 0) displayRecipes.add(null);
 		return displayRecipes;
 	}
 	
@@ -175,7 +176,7 @@ public abstract class GEOMiner extends AContainer implements InventoryBlock, Rec
 		else {
 			Chunk chunk = b.getChunk();
 			
-			for (OreGenResource resource: OreGenSystem.listResources()) {
+			for (OreGenResource resource : OreGenSystem.listResources()) {
 				if (!resource.isLiquid()) {
 					if (!OreGenSystem.wasResourceGenerated(resource, chunk)) {
 						SimpleHologram.update(b, "&4GEO-Scan required!");
@@ -183,13 +184,14 @@ public abstract class GEOMiner extends AContainer implements InventoryBlock, Rec
 					}
 					else {
 						int supplies = OreGenSystem.getSupplies(resource, chunk, false);
+						
 						if (supplies > 0) {
 							MachineRecipe r = new MachineRecipe(getProcessingTime() / getSpeed(), new ItemStack[0], new ItemStack[] {resource.getItem().clone()});
 							if (!menu.fits(r.getOutput()[0], getOutputSlots())) return;
 							
 							processing.put(b, r);
 							progress.put(b, r.getTicks());
-							OreGenSystem.setSupplies(resource, b.getChunk(), supplies - 1);
+							OreGenSystem.setSupplies(resource, chunk, supplies - 1);
 							SimpleHologram.update(b, "&7Mining: &r" + resource.getName());
 							return;
 						}

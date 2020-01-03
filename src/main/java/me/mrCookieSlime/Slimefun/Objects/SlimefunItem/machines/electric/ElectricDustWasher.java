@@ -6,8 +6,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.inventory.ItemStack;
 
-import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.InvUtils;
-import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.Item.CustomItem;
+import io.github.thebusybiscuit.cscorelib2.item.CustomItem;
 import me.mrCookieSlime.Slimefun.SlimefunPlugin;
 import me.mrCookieSlime.Slimefun.Lists.RecipeType;
 import me.mrCookieSlime.Slimefun.Lists.SlimefunItems;
@@ -59,7 +58,7 @@ public abstract class ElectricDustWasher extends AContainer {
 				ChargableBlock.addCharge(b, -getEnergyConsumption());
 
 				menu.replaceExistingItem(22, new CustomItem(new ItemStack(Material.BLACK_STAINED_GLASS_PANE), " "));
-				pushItems(b, processing.get(b).getOutput());
+				menu.pushItem(processing.get(b).getOutput()[0].clone(), getOutputSlots());
 				
 				progress.remove(b);
 				processing.remove(b);
@@ -68,13 +67,13 @@ public abstract class ElectricDustWasher extends AContainer {
 		else {
 			ItemStack[] items = SlimefunPlugin.getUtilities().oreWasherOutputs;
 			
-			for (int slot: getInputSlots()) {
-				if (SlimefunManager.isItemSimiliar(menu.getItemInSlot(slot), SlimefunItems.SIFTED_ORE, true)) {
+			for (int slot : getInputSlots()) {
+				if (SlimefunManager.isItemSimilar(menu.getItemInSlot(slot), SlimefunItems.SIFTED_ORE, true)) {
 					if (!SlimefunPlugin.getSettings().legacyDustWasher) {
 						boolean emptySlot = false;
             
-						for (int output_slot: getOutputSlots()) {
-							if (menu.getItemInSlot(output_slot) == null) {
+						for (int outputSlot : getOutputSlots()) {
+							if (menu.getItemInSlot(outputSlot) == null) {
 								emptySlot = true;
 								break;
 							}
@@ -84,16 +83,16 @@ public abstract class ElectricDustWasher extends AContainer {
 					
 					ItemStack adding = items[new Random().nextInt(items.length)];
 					MachineRecipe r = new MachineRecipe(4 / getSpeed(), new ItemStack[0], new ItemStack[] {adding});
-					if (SlimefunPlugin.getSettings().legacyDustWasher && !fits(b, r.getOutput())) return;
-					menu.replaceExistingItem(slot, InvUtils.decreaseItem(menu.getItemInSlot(slot), 1));
+					if (SlimefunPlugin.getSettings().legacyDustWasher && !menu.fits(r.getOutput()[0], getOutputSlots())) return;
+	                menu.consumeItem(slot);
 					processing.put(b, r);
 					progress.put(b, r.getTicks());
 					break;
 				}
-				else if (SlimefunManager.isItemSimiliar(menu.getItemInSlot(slot), SlimefunItems.PULVERIZED_ORE, true)) {
+				else if (SlimefunManager.isItemSimilar(menu.getItemInSlot(slot), SlimefunItems.PULVERIZED_ORE, true)) {
 					MachineRecipe r = new MachineRecipe(4 / getSpeed(), new ItemStack[0], new ItemStack[] {SlimefunItems.PURE_ORE_CLUSTER});
-					if (!fits(b, r.getOutput())) return;
-					menu.replaceExistingItem(slot, InvUtils.decreaseItem(menu.getItemInSlot(slot), 1));
+					if (!menu.fits(r.getOutput()[0], getOutputSlots())) return;
+	                menu.consumeItem(slot);
 					processing.put(b, r);
 					progress.put(b, r.getTicks());
 					break;

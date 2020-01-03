@@ -4,25 +4,49 @@ import java.io.File;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
-import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import io.github.thebusybiscuit.cscorelib2.config.Config;
 import io.github.thebusybiscuit.cscorelib2.protection.ProtectionManager;
 import io.github.thebusybiscuit.cscorelib2.recipes.RecipeSnapshot;
 import io.github.thebusybiscuit.cscorelib2.reflection.ReflectionUtils;
-import io.github.thebusybiscuit.cscorelib2.updater.BukkitUpdater;
-import io.github.thebusybiscuit.cscorelib2.updater.GitHubBuildsUpdater;
-import io.github.thebusybiscuit.cscorelib2.updater.Updater;
+import io.github.thebusybiscuit.slimefun4.core.commands.SlimefunCommand;
+import io.github.thebusybiscuit.slimefun4.core.commands.SlimefunTabCompleter;
+import io.github.thebusybiscuit.slimefun4.core.services.AutoSavingService;
+import io.github.thebusybiscuit.slimefun4.core.services.BlockDataService;
+import io.github.thebusybiscuit.slimefun4.core.services.CustomItemDataService;
+import io.github.thebusybiscuit.slimefun4.core.services.CustomTextureService;
+import io.github.thebusybiscuit.slimefun4.core.services.LocalizationService;
+import io.github.thebusybiscuit.slimefun4.core.services.MetricsService;
+import io.github.thebusybiscuit.slimefun4.core.services.UpdaterService;
+import io.github.thebusybiscuit.slimefun4.core.services.github.GitHubService;
+import io.github.thebusybiscuit.slimefun4.implementation.geo.resources.NetherIceResource;
+import io.github.thebusybiscuit.slimefun4.implementation.geo.resources.OilResource;
+import io.github.thebusybiscuit.slimefun4.implementation.geo.resources.SaltResource;
+import io.github.thebusybiscuit.slimefun4.implementation.geo.resources.UraniumResource;
+import io.github.thebusybiscuit.slimefun4.implementation.listeners.AndroidKillingListener;
+import io.github.thebusybiscuit.slimefun4.implementation.listeners.AutonomousToolsListener;
+import io.github.thebusybiscuit.slimefun4.implementation.listeners.BackpackListener;
+import io.github.thebusybiscuit.slimefun4.implementation.listeners.BlockListener;
+import io.github.thebusybiscuit.slimefun4.implementation.listeners.CoolerListener;
+import io.github.thebusybiscuit.slimefun4.implementation.listeners.EnhancedFurnaceListener;
+import io.github.thebusybiscuit.slimefun4.implementation.listeners.GearListener;
+import io.github.thebusybiscuit.slimefun4.implementation.listeners.GrapplingHookListener;
+import io.github.thebusybiscuit.slimefun4.implementation.listeners.ItemPickupListener;
+import io.github.thebusybiscuit.slimefun4.implementation.listeners.MultiBlockListener;
+import io.github.thebusybiscuit.slimefun4.implementation.listeners.NetworkListener;
+import io.github.thebusybiscuit.slimefun4.implementation.listeners.PlayerProfileListener;
+import io.github.thebusybiscuit.slimefun4.implementation.listeners.SlimefunGuideListener;
+import io.github.thebusybiscuit.slimefun4.implementation.listeners.SoulboundListener;
+import io.github.thebusybiscuit.slimefun4.implementation.listeners.TalismanListener;
+import io.github.thebusybiscuit.slimefun4.implementation.listeners.TeleporterListener;
+import io.github.thebusybiscuit.slimefun4.implementation.listeners.WaypointListener;
+import io.github.thebusybiscuit.slimefun4.implementation.listeners.WorldListener;
 import me.mrCookieSlime.CSCoreLibPlugin.CSCoreLib;
-import me.mrCookieSlime.CSCoreLibPlugin.PluginUtils;
-import me.mrCookieSlime.CSCoreLibPlugin.Configuration.Config;
 import me.mrCookieSlime.Slimefun.GEO.OreGenSystem;
-import me.mrCookieSlime.Slimefun.GEO.resources.NetherIceResource;
-import me.mrCookieSlime.Slimefun.GEO.resources.OilResource;
-import me.mrCookieSlime.Slimefun.GEO.resources.UraniumResource;
 import me.mrCookieSlime.Slimefun.GPS.GPSNetwork;
 import me.mrCookieSlime.Slimefun.Lists.SlimefunItems;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.SlimefunItem;
@@ -30,12 +54,8 @@ import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.AContainer;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.AGenerator;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.AReactor;
 import me.mrCookieSlime.Slimefun.Objects.tasks.ArmorTask;
-import me.mrCookieSlime.Slimefun.Setup.CSCoreLibLoader;
-import me.mrCookieSlime.Slimefun.Setup.Files;
 import me.mrCookieSlime.Slimefun.Setup.MiscSetup;
 import me.mrCookieSlime.Slimefun.Setup.ResearchSetup;
-import me.mrCookieSlime.Slimefun.Setup.SlimefunLocalization;
-import me.mrCookieSlime.Slimefun.Setup.SlimefunMetrics;
 import me.mrCookieSlime.Slimefun.Setup.SlimefunSetup;
 import me.mrCookieSlime.Slimefun.Setup.WikiSetup;
 import me.mrCookieSlime.Slimefun.ancient_altar.AncientAltarListener;
@@ -45,33 +65,13 @@ import me.mrCookieSlime.Slimefun.api.Slimefun;
 import me.mrCookieSlime.Slimefun.api.SlimefunBackup;
 import me.mrCookieSlime.Slimefun.api.TickerTask;
 import me.mrCookieSlime.Slimefun.api.inventory.UniversalBlockMenu;
-import me.mrCookieSlime.Slimefun.autosave.BlockAutoSaver;
-import me.mrCookieSlime.Slimefun.autosave.PlayerAutoSaver;
-import me.mrCookieSlime.Slimefun.commands.SlimefunCommand;
-import me.mrCookieSlime.Slimefun.commands.SlimefunTabCompleter;
 import me.mrCookieSlime.Slimefun.hooks.SlimefunHooks;
-import me.mrCookieSlime.Slimefun.hooks.github.GitHubConnector;
-import me.mrCookieSlime.Slimefun.hooks.github.GitHubSetup;
-import me.mrCookieSlime.Slimefun.listeners.AndroidKillingListener;
 import me.mrCookieSlime.Slimefun.listeners.ArmorListener;
-import me.mrCookieSlime.Slimefun.listeners.AutonomousToolsListener;
-import me.mrCookieSlime.Slimefun.listeners.BackpackListener;
-import me.mrCookieSlime.Slimefun.listeners.BlockListener;
 import me.mrCookieSlime.Slimefun.listeners.BowListener;
-import me.mrCookieSlime.Slimefun.listeners.CoolerListener;
 import me.mrCookieSlime.Slimefun.listeners.DamageListener;
-import me.mrCookieSlime.Slimefun.listeners.FurnaceListener;
-import me.mrCookieSlime.Slimefun.listeners.GearListener;
-import me.mrCookieSlime.Slimefun.listeners.GuideOnJoinListener;
 import me.mrCookieSlime.Slimefun.listeners.ItemListener;
-import me.mrCookieSlime.Slimefun.listeners.ItemPickupListener;
-import me.mrCookieSlime.Slimefun.listeners.NetworkListener;
-import me.mrCookieSlime.Slimefun.listeners.PlayerQuitListener;
-import me.mrCookieSlime.Slimefun.listeners.TalismanListener;
-import me.mrCookieSlime.Slimefun.listeners.TeleporterListener;
 import me.mrCookieSlime.Slimefun.listeners.ToolListener;
-import me.mrCookieSlime.Slimefun.listeners.WorldListener;
-import me.mrCookieSlime.Slimefun.utils.Settings;
+import me.mrCookieSlime.Slimefun.utils.ConfigCache;
 import me.mrCookieSlime.Slimefun.utils.Utilities;
 
 public final class SlimefunPlugin extends JavaPlugin {
@@ -79,10 +79,16 @@ public final class SlimefunPlugin extends JavaPlugin {
 	public static SlimefunPlugin instance;
 
 	private RecipeSnapshot recipeSnapshot;
-	private final NamespacedKey itemDataKey = new NamespacedKey(this, "slimefun_item");
+	
+	private final CustomItemDataService itemDataService = new CustomItemDataService(this, "slimefun_item");
+	private final CustomTextureService textureService = new CustomTextureService(this);
+	private final BlockDataService blockDataService = new BlockDataService(this, "slimefun_block");
+	private final GitHubService gitHubService = new GitHubService("TheBusyBiscuit/Slimefun4");
+	private final AutoSavingService autoSavingService = new AutoSavingService();
+	private final UpdaterService updaterService = new UpdaterService(this, getFile());
 	
 	private TickerTask ticker;
-	private SlimefunLocalization local;
+	private LocalizationService local;
 	private Config researches;
 	private Config items;
 	private Config whitelist;
@@ -91,15 +97,15 @@ public final class SlimefunPlugin extends JavaPlugin {
 	private GPSNetwork gps;
 	private ProtectionManager protections;
 	private Utilities utilities;
-	private Settings settings;
+	private ConfigCache settings;
 	private SlimefunHooks hooks;
 	
 	// Supported Versions of Minecraft
-	private final String[] supported = {"v1_14_"};
+	private final String[] supported = {"v1_14_", "v1_15_"};
 
 	@Override
 	public void onEnable() {
-		if (new CSCoreLibLoader(this).load()) {
+		if (getServer().getPluginManager().isPluginEnabled("CS-CoreLib")) {
 
 			/*
 			String currentVersion = ReflectionUtils.getVersion();
@@ -109,7 +115,7 @@ public final class SlimefunPlugin extends JavaPlugin {
 				StringBuilder versions = new StringBuilder();
 
 				int i = 0;
-				for (String version: supported) {
+				for (String version : supported) {
 					if (currentVersion.startsWith(version)) {
 						compatibleVersion = true;
 					}
@@ -141,58 +147,46 @@ public final class SlimefunPlugin extends JavaPlugin {
 			*/
 
 			instance = this;
+			
+			// Creating all necessary Folders
 			getLogger().log(Level.INFO, "Loading Files...");
-			Files files = new Files();
-			files.cleanup();
+			String[] storage = {"Players", "blocks", "stored-blocks", "stored-inventories", "stored-chunks", "universal-inventories", "waypoints", "block-backups"};
+			String[] general = {"scripts", "generators", "error-reports", "cache/github"};
+			for (String file : storage) createDir("data-storage/Slimefun/" + file);
+			for (String file : general) createDir("plugins/Slimefun/" + file);
 
 			getLogger().log(Level.INFO, "Loading Config...");
 
 			// Setup config.yml
-			PluginUtils utils = new PluginUtils(this);
-			utils.setupConfig();
-			config = utils.getConfig();
-			settings = new Settings(config);
+			config = new Config(this);
+			settings = new ConfigCache(config);
 
 			// Loading all extra configs
-			researches = new Config(files.researches);
-			items = new Config(files.items);
-			whitelist = new Config(files.whitelist);
+			researches = new Config(this, "Researches.yml");
+			items = new Config(this, "Items.yml");
+			whitelist = new Config(this, "whitelist.yml");
 
 			// Setup messages.yml
-			local = new SlimefunLocalization(this);
+			local = new LocalizationService(this);
 			
 			// Setting up other stuff
 			utilities = new Utilities();
 			gps = new GPSNetwork();
 
 			// Setting up bStats
-			// new SlimefunMetrics(this);
 
-			// Setting up the Auto-Updater
-            /*
-			Updater updater;
+			new MetricsService(this);
 
-			if (getDescription().getVersion().startsWith("DEV - ")) {
-				// If we are using a development build, we want to switch to our custom 
-				updater = new GitHubBuildsUpdater(this, getFile(), "TheBusyBiscuit/Slimefun4/master");
+			// Starting the Auto-Updater
+			if (config.getBoolean("options.auto-update")) {
+				updaterService.start();
 			}
-			else if (getDescription().getVersion().startsWith("RC - ")) {
-				// If we are using a development build, we want to switch to our custom 
-				updater = new GitHubBuildsUpdater(this, getFile(), "TheBusyBiscuit/Slimefun4/stable", "RC - ");
-			}
-			else {
-				// We are using an official build, use the BukkitDev Updater
-				updater = new BukkitUpdater(this, getFile(), 53485);
-			}
-
-			if (config.getBoolean("options.auto-update")) updater.start();
-			*/
 
 			// Creating all necessary Folders
-			String[] storage = {"blocks", "stored-blocks", "stored-inventories", "stored-chunks", "universal-inventories", "waypoints", "block-backups"};
-			String[] general = {"scripts", "generators", "error-reports", "cache/github"};
-			for (String s : storage) createDir("data-storage/Slimefun/" + s);
-			for (String s : general) createDir("plugins/Slimefun/" + s);
+			// String[] storage = {"blocks", "stored-blocks", "stored-inventories", "stored-chunks", "universal-inventories", "waypoints", "block-backups"};
+			// String[] general = {"scripts", "generators", "error-reports", "cache/github"};
+			// for (String s : storage) createDir("data-storage/Slimefun/" + s);
+			// for (String s : general) createDir("plugins/Slimefun/" + s);
 
 			getLogger().log(Level.INFO, "Loading Items...");
 			MiscSetup.setupItemSettings();
@@ -202,69 +196,72 @@ public final class SlimefunPlugin extends JavaPlugin {
 			} catch (Exception x) {
 				getLogger().log(Level.SEVERE, "An Error occured while initializing SlimefunItems for Slimefun " + Slimefun.getVersion(), x);
 			}
-			
-			MiscSetup.loadDescriptions();
-			
-			settings.researchesEnabled = getResearchCfg().getBoolean("enable-researching");
-			settings.smelteryFireBreakChance = (Integer) Slimefun.getItemValue("SMELTERY", "chance.fireBreak");
 
 			getLogger().log(Level.INFO, "Loading Researches...");
 			ResearchSetup.setupResearches();
+			
+			settings.researchesEnabled = getResearchCfg().getBoolean("enable-researching");
+			settings.smelteryFireBreakChance = (int) Slimefun.getItemValue("SMELTERY", "chance.fireBreak");
 
 			MiscSetup.setupMisc();
-			WikiSetup.addWikiPages(getClass());
+			WikiSetup.addWikiPages(this);
+			textureService.setup(utilities.allItems);
 
 			getLogger().log(Level.INFO, "Loading World Generators...");
 
-			// Generating Oil as an OreGenResource (its a cool API)
+			// Generating Oil as an OreGenResource (it iss a cool API)
 			OreGenSystem.registerResource(new OilResource());
 			OreGenSystem.registerResource(new NetherIceResource());
 			OreGenSystem.registerResource(new UraniumResource());
+			OreGenSystem.registerResource(new SaltResource());
 
 			// Setting up GitHub Connectors...
-
-			GitHubSetup.setup();
+			gitHubService.connect(config.getBoolean("options.print-out-github-data-retrieving"));
 
 			// All Slimefun Listeners
 			new ArmorListener(this);
 			new ItemListener(this);
 			new BlockListener(this);
+			new MultiBlockListener(this);
 			new GearListener(this);
 			new AutonomousToolsListener(this);
 			new DamageListener(this);
 			new BowListener(this);
 			new ToolListener(this);
-			new FurnaceListener(this);
+			new EnhancedFurnaceListener(this);
 			new TeleporterListener(this);
 			new AndroidKillingListener(this);
 			new NetworkListener(this);
 			new ItemPickupListener(this);
+			new WaypointListener(this);
 
 			// Toggleable Listeners for performance
 			if (config.getBoolean("items.talismans")) new TalismanListener(this);
 			if (config.getBoolean("items.backpacks")) new BackpackListener(this);
 			if (config.getBoolean("items.coolers")) new CoolerListener(this);
+			if (config.getBoolean("items.soulbound")) new SoulboundListener(this);
 
 			// Handle Slimefun Guide being given on Join
-			if (config.getBoolean("options.give-guide-on-first-join")) new GuideOnJoinListener(this);
+			if (config.getBoolean("options.give-guide-on-first-join")) new SlimefunGuideListener(this);
 
 			// Load/Unload Worlds in Slimefun
 			new WorldListener(this);
 
 			// Clear the Slimefun Guide History upon Player Leaving
-			new PlayerQuitListener(this);
+			new PlayerProfileListener(this);
 
 			// Initiating various Stuff and all Items with a slightly delay (0ms after the Server finished loading)
-			getServer().getScheduler().scheduleSyncDelayedTask(this, () -> {
+			Slimefun.runSync(() -> {
 				recipeSnapshot = new RecipeSnapshot(this);
 				protections = new ProtectionManager(getServer());
 				MiscSetup.loadItems(settings);
 
-				for (World world: Bukkit.getWorlds()) {
+				for (World world : Bukkit.getWorlds()) {
 					new BlockStorage(world);
 				}
 
-				if (SlimefunItem.getByID("ANCIENT_ALTAR") != null) new AncientAltarListener((SlimefunPlugin) instance);
+				if (SlimefunItem.getByID("ANCIENT_ALTAR") != null) new AncientAltarListener(this);
+				if (SlimefunItem.getByID("GRAPPLING_HOOK") != null) new GrapplingHookListener(this);
 			}, 0);
 			
 			SlimefunCommand command = new SlimefunCommand(this);
@@ -279,21 +276,20 @@ public final class SlimefunPlugin extends JavaPlugin {
 
 			ticker = new TickerTask();
 
-			getServer().getScheduler().runTaskTimer(this, new PlayerAutoSaver(), 2000L, settings.blocksAutoSaveDelay * 60L * 20L);
-
+			autoSavingService.start(this, config.getInt("options.auto-save-delay-in-minutes"));
+			
 			// Starting all ASYNC Tasks
-			getServer().getScheduler().runTaskTimerAsynchronously(this, new BlockAutoSaver(), 2000L, settings.blocksAutoSaveDelay * 60L * 20L);
 			getServer().getScheduler().runTaskTimerAsynchronously(this, () -> {
 				try {
 					ticker.run();
 				}
-				catch(Throwable x) {
+				catch(Exception x) {
 					getLogger().log(Level.SEVERE, "An Exception was caught while ticking the Block Tickers Task for Slimefun v" + Slimefun.getVersion(), x);
 					ticker.abortTick();
 				}
 			}, 100L, config.getInt("URID.custom-ticker-delay"));
-
-			getServer().getScheduler().runTaskTimerAsynchronously(this, () -> utilities.connectors.forEach(GitHubConnector::pullFile), 80L, 60 * 60 * 20L);
+			
+			gitHubService.start(this);
 
 			// Hooray!
 			getLogger().log(Level.INFO, "Finished!");
@@ -305,9 +301,16 @@ public final class SlimefunPlugin extends JavaPlugin {
 			CSCoreLib.getLib().filterLog("([A-Za-z0-9_]{3,16}) issued server command: /sf elevator (.{0,})");
 		}
 		else {
+			getLogger().log(Level.INFO, "#################### - INFO - ####################");
+			getLogger().log(Level.INFO, " ");
+			getLogger().log(Level.INFO, "Slimefun could not be loaded (yet).");
+			getLogger().log(Level.INFO, "It appears that you have not installed CS-CoreLib.");
+			getLogger().log(Level.INFO, "Please download and install CS-CoreLib manually:");
+			getLogger().log(Level.INFO, "https://thebusybiscuit.github.io/builds/TheBusyBiscuit/CS-CoreLib/master/");
+			
 			getCommand("slimefun").setExecutor((sender, cmd, label, args) -> {
 				sender.sendMessage("You have forgotten to install CS-CoreLib! Slimefun is disabled.");
-				sender.sendMessage("https://dev.bukkit.org/projects/cs-corelib");
+				sender.sendMessage("https://thebusybiscuit.github.io/builds/TheBusyBiscuit/CS-CoreLib/master/");
 				return true;
 			});
 		}
@@ -330,7 +333,7 @@ public final class SlimefunPlugin extends JavaPlugin {
 			if (profile.isDirty()) profile.save();
 		});
 		
-		for (World world: Bukkit.getWorlds()) {
+		for (World world : Bukkit.getWorlds()) {
 			try {
 				BlockStorage storage = BlockStorage.getStorage(world);
 				
@@ -345,7 +348,7 @@ public final class SlimefunPlugin extends JavaPlugin {
 			}
 		}
 		
-		for (UniversalBlockMenu menu: utilities.universalInventories.values()) {
+		for (UniversalBlockMenu menu : utilities.universalInventories.values()) {
 			menu.save();
 		}
 		
@@ -363,7 +366,7 @@ public final class SlimefunPlugin extends JavaPlugin {
 
 		instance = null;
 
-		for (Player p: Bukkit.getOnlinePlayers()) {
+		for (Player p : Bukkit.getOnlinePlayers()) {
 			p.closeInventory();
 		}
 	}
@@ -377,7 +380,7 @@ public final class SlimefunPlugin extends JavaPlugin {
 		return instance.config;
 	}
 
-	public static Config getResearchCfg() {
+	public static io.github.thebusybiscuit.cscorelib2.config.Config getResearchCfg() {
 		return instance.researches;
 	}
 
@@ -385,20 +388,8 @@ public final class SlimefunPlugin extends JavaPlugin {
 		return instance.items;
 	}
 
-	public static Config getWhitelist() {
+	public static io.github.thebusybiscuit.cscorelib2.config.Config getWhitelist() {
 		return instance.whitelist;
-	}
-
-	@Deprecated
-	public static int randomize(int max) {
-		if (max < 1) return 0;
-		return CSCoreLib.randomizer().nextInt(max);
-	}
-
-	@Deprecated
-	public static boolean chance(int max, int percentage) {
-		if (max < 1) return false;
-		return CSCoreLib.randomizer().nextInt(max) <= percentage;
 	}
 
 	public GPSNetwork getGPS() {
@@ -413,7 +404,7 @@ public final class SlimefunPlugin extends JavaPlugin {
 		return instance.utilities;
 	}
 	
-	public static Settings getSettings() {
+	public static ConfigCache getSettings() {
 		return instance.settings;
 	}
 	
@@ -429,7 +420,7 @@ public final class SlimefunPlugin extends JavaPlugin {
 		return instance.protections;
 	}
 
-	public static SlimefunLocalization getLocal() {
+	public static LocalizationService getLocal() {
 		return instance.local;
 	}
 	
@@ -437,8 +428,20 @@ public final class SlimefunPlugin extends JavaPlugin {
 		return instance.recipeSnapshot;
 	}
 	
-	public static NamespacedKey getItemDataKey() {
-		return instance.itemDataKey;
+	public static CustomItemDataService getItemDataService() {
+		return instance.itemDataService;
+	}
+	
+	public static CustomTextureService getItemTextureService() {
+		return instance.textureService;
+	}
+	
+	public static BlockDataService getBlockDataService() {
+		return instance.blockDataService;
+	}
+
+	public static GitHubService getGitHubService() {
+		return instance.gitHubService;
 	}
 
 }

@@ -10,22 +10,24 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 
 import io.github.thebusybiscuit.cscorelib2.blocks.Vein;
+import io.github.thebusybiscuit.cscorelib2.item.CustomItem;
 import me.mrCookieSlime.CSCoreLibPlugin.Configuration.Config;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu.AdvancedMenuClickHandler;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ClickAction;
-import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.InvUtils;
-import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.Item.CustomItem;
 import me.mrCookieSlime.Slimefun.Lists.RecipeType;
 import me.mrCookieSlime.Slimefun.Objects.Category;
+import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.SimpleSlimefunItem;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.SlimefunItem;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.interfaces.InventoryBlock;
 import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
 import me.mrCookieSlime.Slimefun.Setup.SlimefunManager;
 import me.mrCookieSlime.Slimefun.api.BlockStorage;
+import me.mrCookieSlime.Slimefun.api.SlimefunItemStack;
 import me.mrCookieSlime.Slimefun.api.energy.ChargableBlock;
+import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenuPreset;
 
-public class FluidPump extends SlimefunItem implements InventoryBlock {
+public class FluidPump extends SimpleSlimefunItem<BlockTicker> implements InventoryBlock {
 	
 	private static final int[] border = {0, 1, 2, 3, 4, 5, 6, 7, 8, 13, 31, 36, 37, 38, 39, 40, 41, 42, 43, 44, 22};
 	private static final int[] border_in = {9, 10, 11, 12, 18, 21, 27, 28, 29, 30};
@@ -33,8 +35,8 @@ public class FluidPump extends SlimefunItem implements InventoryBlock {
 
 	protected int energyConsumption = 32;
 	
-	public FluidPump(Category category, ItemStack item, String name, RecipeType recipeType, ItemStack[] recipe) {
-		super(category, item, name, recipeType, recipe);
+	public FluidPump(Category category, SlimefunItemStack item, RecipeType recipeType, ItemStack[] recipe) {
+		super(category, item, recipeType, recipe);
 		
 		createPreset(this, "&9Fluid Pump", this::constructMenu);
 	}
@@ -79,40 +81,33 @@ public class FluidPump extends SlimefunItem implements InventoryBlock {
 	
 	protected void tick(Block b) {
 		Block fluid = b.getRelative(BlockFace.DOWN);
+		ItemStack output = null;
+		
 		if (fluid.getType() == Material.LAVA) {
-			for (int slot : getInputSlots()) {
-				if (SlimefunManager.isItemSimiliar(BlockStorage.getInventory(b).getItemInSlot(slot), new ItemStack(Material.BUCKET), true)) {
-					if (ChargableBlock.getCharge(b) < energyConsumption) return;
-					
-					ItemStack output = new ItemStack(Material.LAVA_BUCKET);
-					
-					if (!fits(b, output)) return;
-
-					ChargableBlock.addCharge(b, -energyConsumption);
-					BlockStorage.getInventory(b).replaceExistingItem(slot, InvUtils.decreaseItem(BlockStorage.getInventory(b).getItemInSlot(slot), 1));
-					pushItems(b, output);
-					
-					List<Block> list = Vein.find(fluid, 50, block -> block.isLiquid() && block.getType() == fluid.getType());
-		        	list.get(list.size() - 1).setType(Material.AIR);
-					
-					return;
-				}
-			}
+			output = new ItemStack(Material.LAVA_BUCKET);
 		}
 		else if (fluid.getType() == Material.WATER) {
+			output = new ItemStack(Material.WATER_BUCKET);
+		}
+		
+		if (output != null && ChargableBlock.getCharge(b) >= energyConsumption) {
+			BlockMenu menu = BlockStorage.getInventory(b);
+			
 			for (int slot : getInputSlots()) {
-				if (SlimefunManager.isItemSimiliar(BlockStorage.getInventory(b).getItemInSlot(slot), new ItemStack(Material.BUCKET), true)) {
-					if (ChargableBlock.getCharge(b) < energyConsumption) return;
-					
-					ItemStack output = new ItemStack(Material.WATER_BUCKET);
-					
-					if (!fits(b, output)) return;
+				if (SlimefunManager.isItemSimilar(menu.getItemInSlot(slot), new ItemStack(Material.BUCKET), true)) {
+					if (!menu.fits(output, getOutputSlots())) return;
 
 					ChargableBlock.addCharge(b, -energyConsumption);
-					BlockStorage.getInventory(b).replaceExistingItem(slot, InvUtils.decreaseItem(BlockStorage.getInventory(b).getItemInSlot(slot), 1));
-					pushItems(b, output);
+	                menu.consumeItem(slot);
+					menu.pushItem(output, getOutputSlots());
 					
-					fluid.setType(Material.AIR);
+					if (fluid.getType() == Material.WATER) {
+						fluid.setType(Material.AIR);
+					}
+					else {
+						List<Block> list = Vein.find(fluid, 50, block -> block.isLiquid() && block.getType() == fluid.getType());
+			        	list.get(list.size() - 1).setType(Material.AIR);
+					}
 					
 					return;
 				}
@@ -121,8 +116,8 @@ public class FluidPump extends SlimefunItem implements InventoryBlock {
 	}
 
 	@Override
-	public void preRegister() {
-		addItemHandler(new BlockTicker() {
+	public BlockTicker getItemHandler() {
+		return new BlockTicker() {
 			
 			@Override
 			public void tick(Block b, SlimefunItem sf, Config data) {
@@ -133,7 +128,7 @@ public class FluidPump extends SlimefunItem implements InventoryBlock {
 			public boolean isSynchronized() {
 				return true;
 			}
-		});
+		};
 	}
 
 }

@@ -2,6 +2,7 @@ package me.mrCookieSlime.Slimefun.Setup;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -10,6 +11,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 
+import io.github.thebusybiscuit.cscorelib2.item.ImmutableItemMeta;
 import me.mrCookieSlime.EmeraldEnchants.EmeraldEnchants;
 import me.mrCookieSlime.EmeraldEnchants.ItemEnchantment;
 import me.mrCookieSlime.Slimefun.SlimefunPlugin;
@@ -21,6 +23,7 @@ import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.SlimefunArmorPiece;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.SlimefunItem;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.VanillaItem;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.interfaces.Soulbound;
+import me.mrCookieSlime.Slimefun.api.SlimefunItemStack;
 
 public final class SlimefunManager {
 
@@ -28,8 +31,9 @@ public final class SlimefunManager {
 
 	public static void registerArmorSet(ItemStack baseComponent, ItemStack[] items, String idSyntax, PotionEffect[][] effects, boolean special, boolean slimefun) {
 		String[] components = new String[] {"_HELMET", "_CHESTPLATE", "_LEGGINGS", "_BOOTS"};
-		Category cat = special ? Categories.MAGIC_ARMOR: Categories.ARMOR;
+		Category category = special ? Categories.MAGIC_ARMOR: Categories.ARMOR;
 		List<ItemStack[]> recipes = new ArrayList<>();
+		
 		recipes.add(new ItemStack[] {baseComponent, baseComponent, baseComponent, baseComponent, null, baseComponent, null, null, null});
 		recipes.add(new ItemStack[] {baseComponent, null, baseComponent, baseComponent, baseComponent, baseComponent, baseComponent, baseComponent, baseComponent});
 		recipes.add(new ItemStack[] {baseComponent, baseComponent, baseComponent, baseComponent, null, baseComponent, baseComponent, null, baseComponent});
@@ -37,10 +41,10 @@ public final class SlimefunManager {
 
 		for (int i = 0; i < 4; i++) {
 			if (i < effects.length && effects[i].length > 0) {
-				new SlimefunArmorPiece(cat, items[i], idSyntax + components[i], RecipeType.ARMOR_FORGE, recipes.get(i), effects[i]).register(slimefun);
+				new SlimefunArmorPiece(category, items[i], idSyntax + components[i], RecipeType.ARMOR_FORGE, recipes.get(i), effects[i]).register(slimefun);
 			}
 			else {
-				new SlimefunItem(cat, items[i], idSyntax + components[i], RecipeType.ARMOR_FORGE, recipes.get(i)).register(slimefun);
+				new SlimefunItem(category, items[i], idSyntax + components[i], RecipeType.ARMOR_FORGE, recipes.get(i)).register(slimefun);
 			}
 		}
 	}
@@ -65,51 +69,92 @@ public final class SlimefunManager {
 	}
 
 	@Deprecated
-	public static enum DataType {
-
-		ALWAYS,
-		NEVER,
-		IF_COLORED;
-
+	public static boolean isItemSimiliar(ItemStack item, ItemStack sfitem, boolean lore) {
+		return isItemSimilar(item, sfitem, lore);
 	}
 
-	public static boolean isItemSimiliar(ItemStack item, ItemStack sfitem, boolean lore) {
+	public static boolean isItemSimilar(ItemStack item, ItemStack sfitem, boolean checkLore) {
 		if (item == null) return sfitem == null;
 		if (sfitem == null) return false;
+		
+		if (item instanceof SlimefunItemStack && sfitem instanceof SlimefunItemStack) {
+			return ((SlimefunItemStack) item).getItemID().equals(((SlimefunItemStack) sfitem).getItemID());
+		}
 
 		if (item.getType() == sfitem.getType() && item.getAmount() >= sfitem.getAmount()) {
-			if (item.hasItemMeta() && sfitem.hasItemMeta()) {
-				if (item.getItemMeta().hasDisplayName() && sfitem.getItemMeta().hasDisplayName()) {
-					if (item.getItemMeta().getDisplayName().equals(sfitem.getItemMeta().getDisplayName())) {
-						if (lore) {
-							if (item.getItemMeta().hasLore() && sfitem.getItemMeta().hasLore()) {
-								return equalsLore(item.getItemMeta().getLore(), sfitem.getItemMeta().getLore());
+			if (!item.hasItemMeta() && !sfitem.hasItemMeta()) {
+				return true;
+			}
+			else {
+				ItemMeta itemMeta = item.getItemMeta();
+				
+				if (sfitem instanceof SlimefunItemStack) {
+					Optional<String> id = SlimefunPlugin.getItemDataService().getItemData(itemMeta);
+					
+					if (id.isPresent()) {
+						return id.get().equals(((SlimefunItemStack) sfitem).getItemID());
+					}
+					
+					ImmutableItemMeta meta = ((SlimefunItemStack) sfitem).getImmutableMeta();
+					
+					Optional<String> displayName = meta.getDisplayName();
+					
+					if (itemMeta.hasDisplayName() && displayName.isPresent()) {
+						if (itemMeta.getDisplayName().equals(displayName.get())) {
+							Optional<List<String>> itemLore = meta.getLore();
+							
+							if (checkLore) {
+								if (itemMeta.hasLore() && itemLore.isPresent()) {
+									return equalsLore(itemMeta.getLore(), itemLore.get());
+								}
+								else return !itemMeta.hasLore() && !itemLore.isPresent();
 							}
-							else return !item.getItemMeta().hasLore() && !sfitem.getItemMeta().hasLore();
+							else return true;
+						}
+						else return false;
+					}
+					else if (!itemMeta.hasDisplayName() && !displayName.isPresent()) {
+						Optional<List<String>> itemLore = meta.getLore();
+						
+						if (checkLore) {
+							if (itemMeta.hasLore() && itemLore.isPresent()) {
+								return equalsLore(itemMeta.getLore(), itemLore.get());
+							}
+							else return !itemMeta.hasLore() && !itemLore.isPresent();
 						}
 						else return true;
 					}
 					else return false;
 				}
-				else if (!item.getItemMeta().hasDisplayName() && !sfitem.getItemMeta().hasDisplayName()) {
-					if (lore) {
-						if (item.getItemMeta().hasLore() && sfitem.getItemMeta().hasLore()) {
-							return equalsLore(item.getItemMeta().getLore(), sfitem.getItemMeta().getLore());
+				else {
+					ItemMeta sfitemMeta = sfitem.getItemMeta();
+					
+					if (itemMeta.hasDisplayName() && sfitemMeta.hasDisplayName()) {
+						if (itemMeta.getDisplayName().equals(sfitemMeta.getDisplayName())) {
+							if (checkLore) {
+								if (itemMeta.hasLore() && sfitemMeta.hasLore()) {
+									return equalsLore(itemMeta.getLore(), sfitemMeta.getLore());
+								}
+								else return !itemMeta.hasLore() && !sfitemMeta.hasLore();
+							}
+							else return true;
 						}
-						else return !item.getItemMeta().hasLore() && !sfitem.getItemMeta().hasLore();
+						else return false;
 					}
-					else return true;
+					else if (!itemMeta.hasDisplayName() && !sfitemMeta.hasDisplayName()) {
+						if (checkLore) {
+							if (itemMeta.hasLore() && sfitemMeta.hasLore()) {
+								return equalsLore(itemMeta.getLore(), sfitemMeta.getLore());
+							}
+							else return !itemMeta.hasLore() && !sfitemMeta.hasLore();
+						}
+						else return true;
+					}
+					else return false;
 				}
-				else return false;
 			}
-			else return !item.hasItemMeta() && !sfitem.hasItemMeta();
 		}
 		else return false;
-	}
-
-	@Deprecated
-	public static boolean isItemSimiliar(ItemStack item, ItemStack sfitem, boolean lore, DataType data) {
-		return isItemSimiliar(item, sfitem, lore);
 	}
 
 	public static boolean containsSimilarItem(Inventory inventory, ItemStack itemStack, boolean checkLore) {
@@ -117,7 +162,7 @@ public final class SlimefunManager {
 
 		for (ItemStack is : inventory.getStorageContents()) {
 			if (is == null || is.getType() == Material.AIR) continue;
-			if (isItemSimiliar(is, itemStack, checkLore)) return true;
+			if (isItemSimilar(is, itemStack, checkLore)) return true;
 		}
 
 		return false;
@@ -128,20 +173,28 @@ public final class SlimefunManager {
 		StringBuilder string2 = new StringBuilder();
 
 		String colors = ChatColor.YELLOW.toString() + ChatColor.YELLOW.toString() + ChatColor.GRAY.toString();
-		for (String string: lore) {
-			if (!string.equals(ChatColor.GRAY + "Soulbound") && !string.startsWith(colors)) string1.append("-NEW LINE-").append(string);
+		
+		for (String string : lore) {
+			if (!string.equals(ChatColor.GRAY + "Soulbound") && !string.startsWith(colors)) {
+				string1.append("-NEW LINE-").append(string);
+			}
 		}
 
-		for (String string: lore2) {
-			if (!string.equals(ChatColor.GRAY + "Soulbound") && !string.startsWith(colors)) string2.append("-NEW LINE-").append(string);
+		for (String string : lore2) {
+			if (!string.equals(ChatColor.GRAY + "Soulbound") && !string.startsWith(colors)) {
+				string2.append("-NEW LINE-").append(string);
+			}
 		}
+		
 		return string1.toString().equals(string2.toString());
 	}
 
 	public static boolean isItemSoulbound(ItemStack item) {
-		if (item == null || item.getType() == Material.AIR) return false;
-		else if (SlimefunManager.isItemSimiliar(item, SlimefunItems.BOUND_BACKPACK, false)) {
-			return true;
+		if (item == null || item.getType() == Material.AIR) {
+			return false;
+		}
+		else if (isItemSimilar(item, SlimefunItems.BOUND_BACKPACK, false)) {
+			return !SlimefunItem.getByID("BOUND_BACKPACK").isDisabled();
 		}
 		else {
 			ItemStack strippedItem = item.clone();
@@ -152,7 +205,8 @@ public final class SlimefunManager {
 				}
 			}
 			
-			if (SlimefunItem.getByItem(strippedItem) instanceof Soulbound) {
+			SlimefunItem sfItem = SlimefunItem.getByItem(strippedItem);
+			if (sfItem instanceof Soulbound && !sfItem.isDisabled()) {
 				return true;
 			}
 			else if (item.hasItemMeta()) {

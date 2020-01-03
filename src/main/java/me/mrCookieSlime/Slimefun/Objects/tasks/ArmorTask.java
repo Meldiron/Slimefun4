@@ -39,7 +39,7 @@ public class ArmorTask implements Runnable {
 
 	@Override
 	public void run() {
-		for (Player p: Bukkit.getOnlinePlayers()) {
+		for (Player p : Bukkit.getOnlinePlayers()) {
 			if (!p.isValid() || p.isDead()) {
 				continue;
 			}
@@ -62,8 +62,8 @@ public class ArmorTask implements Runnable {
 					}
 					
 					if (item != null && armorpiece.getItem().isPresent()) {
-						Bukkit.getScheduler().runTask(SlimefunPlugin.instance, () -> {
-							for (PotionEffect effect: armorpiece.getItem().get().getEffects()) {
+						Slimefun.runSync(() -> {
+							for (PotionEffect effect : armorpiece.getItem().get().getEffects()) {
 								p.removePotionEffect(effect.getType());
 
 								if(!p.getWorld().getName().equalsIgnoreCase("spawn")) {
@@ -74,39 +74,45 @@ public class ArmorTask implements Runnable {
 					}
 				}
 				
-				if (SlimefunManager.isItemSimiliar(p.getInventory().getHelmet(), SlimefunItems.SOLAR_HELMET, true) 
+				if (SlimefunManager.isItemSimilar(p.getInventory().getHelmet(), SlimefunItems.SOLAR_HELMET, true) 
 					&& Slimefun.hasUnlocked(p, SlimefunItem.getByID("SOLAR_HELMET"), true) 
 					&& (p.getWorld().getTime() < 12300 || p.getWorld().getTime() > 23850) 
 					&& p.getEyeLocation().getBlock().getLightFromSky() == 15) 
 				{
 					ItemEnergy.chargeInventory(p, ((Double) Slimefun.getItemValue("SOLAR_HELMET", "charge-amount")).floatValue());
 				}
-
-				for (ItemStack radioactive: utilities.radioactiveItems) {
-					if (SlimefunManager.containsSimilarItem(p.getInventory(), radioactive, true)) {
-						// Check if player is wearing the hazmat suit
-						// If so, break the loop
-						if (SlimefunManager.isItemSimiliar(SlimefunItems.SCUBA_HELMET, p.getInventory().getHelmet(), true) &&
-								SlimefunManager.isItemSimiliar(SlimefunItems.HAZMATSUIT_CHESTPLATE, p.getInventory().getChestplate(), true) &&
-								SlimefunManager.isItemSimiliar(SlimefunItems.HAZMATSUIT_LEGGINGS, p.getInventory().getLeggings(), true) &&
-								SlimefunManager.isItemSimiliar(SlimefunItems.RUBBER_BOOTS, p.getInventory().getBoots(), true)) {
-							break;
-						}
-
-						// If the item is enabled in the world, then make radioactivity do its job
-						if (Slimefun.isEnabled(p, radioactive, false)) {
-							SlimefunPlugin.getLocal().sendMessage(p, "messages.radiation");
-							Bukkit.getScheduler().runTask(SlimefunPlugin.instance, () -> {
-								p.addPotionEffects(radiationEffects);
-								p.setFireTicks(400);
-							});
-							
+				
+				// Check for a Hazmat Suit
+				if (!SlimefunManager.isItemSimilar(SlimefunItems.SCUBA_HELMET, p.getInventory().getHelmet(), true) &&
+						!SlimefunManager.isItemSimilar(SlimefunItems.HAZMATSUIT_CHESTPLATE, p.getInventory().getChestplate(), true) &&
+						!SlimefunManager.isItemSimilar(SlimefunItems.HAZMATSUIT_LEGGINGS, p.getInventory().getLeggings(), true) &&
+						!SlimefunManager.isItemSimilar(SlimefunItems.RUBBER_BOOTS, p.getInventory().getBoots(), true))
+				{
+					for (ItemStack item : p.getInventory()) {
+						if (isRadioactive(p, item)) {
 							break;
 						}
 					}
 				}
 			});
 		}
+	}
+	
+	private boolean isRadioactive(Player p, ItemStack item) {
+		for (ItemStack radioactiveItem : utilities.radioactiveItems) {
+			if (SlimefunManager.isItemSimilar(item, radioactiveItem, true) && Slimefun.isEnabled(p, radioactiveItem, false)) {
+				// If the item is enabled in the world, then make radioactivity do its job
+				SlimefunPlugin.getLocal().sendMessage(p, "messages.radiation");
+				Slimefun.runSync(() -> {
+					p.addPotionEffects(radiationEffects);
+					p.setFireTicks(400);
+				});
+				
+				return true;
+			}
+		}
+		
+		return false;
 	}
 
 }

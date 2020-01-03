@@ -8,8 +8,7 @@ import org.bukkit.Tag;
 import org.bukkit.block.Block;
 import org.bukkit.inventory.ItemStack;
 
-import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.InvUtils;
-import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.Item.CustomItem;
+import io.github.thebusybiscuit.cscorelib2.item.CustomItem;
 import me.mrCookieSlime.Slimefun.Lists.RecipeType;
 import me.mrCookieSlime.Slimefun.Lists.SlimefunItems;
 import me.mrCookieSlime.Slimefun.Objects.Category;
@@ -39,9 +38,6 @@ public class AutoDrier extends AContainer implements RecipeDisplayItem {
         recipeList.add(new ItemStack(Material.KELP));
         recipeList.add(new ItemStack(Material.DRIED_KELP));
         
-        recipeList.add(new ItemStack(Material.COOKED_BEEF));
-        recipeList.add(SlimefunItems.BEEF_JERKY);
-        
         recipeList.add(new ItemStack(Material.POTION));
         recipeList.add(new ItemStack(Material.GLASS_BOTTLE));
         
@@ -53,6 +49,24 @@ public class AutoDrier extends AContainer implements RecipeDisplayItem {
         
         recipeList.add(new ItemStack(Material.WATER_BUCKET));
         recipeList.add(new ItemStack(Material.BUCKET));
+        
+        recipeList.add(new ItemStack(Material.COOKED_BEEF));
+        recipeList.add(SlimefunItems.BEEF_JERKY);
+        
+        recipeList.add(new ItemStack(Material.COOKED_PORKCHOP));
+        recipeList.add(SlimefunItems.PORK_JERKY);
+        
+        recipeList.add(new ItemStack(Material.COOKED_CHICKEN));
+        recipeList.add(SlimefunItems.CHICKEN_JERKY);
+        
+        recipeList.add(new ItemStack(Material.COOKED_MUTTON));
+        recipeList.add(SlimefunItems.MUTTON_JERKY);
+        
+        recipeList.add(new ItemStack(Material.COOKED_RABBIT));
+        recipeList.add(SlimefunItems.RABBIT_JERKY);
+        
+        recipeList.add(new ItemStack(Material.COOKED_COD));
+        recipeList.add(SlimefunItems.FISH_JERKY);
     }
 
     @Override
@@ -98,14 +112,14 @@ public class AutoDrier extends AContainer implements RecipeDisplayItem {
             MachineRecipe r = null;
             int inputSlot = -1;
             
-            for (int slot: getInputSlots()) {
+            for (int slot : getInputSlots()) {
                 ItemStack item = menu.getItemInSlot(slot);
                 if (item != null) {
                     Material mat = item.getType();
                     ItemStack output = null;
                     
                     for (int i = 0; i < recipeList.size(); i += 2) {
-                    	if (SlimefunManager.isItemSimiliar(item, recipeList.get(i), true)) {
+                    	if (SlimefunManager.isItemSimilar(item, recipeList.get(i), true)) {
                     		output = recipeList.get(i + 1);
                     	}
                     }
@@ -131,7 +145,8 @@ public class AutoDrier extends AContainer implements RecipeDisplayItem {
             if (r != null) {
                 if (inputSlot == -1) return;
                 if (!menu.fits(r.getOutput()[0], getOutputSlots())) return;
-                menu.replaceExistingItem(inputSlot, InvUtils.decreaseItem(menu.getItemInSlot(inputSlot), 1));
+                
+                menu.consumeItem(inputSlot);
                 processing.put(b, r);
                 progress.put(b, r.getTicks());
             }
